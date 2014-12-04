@@ -15,9 +15,10 @@ function initializeArray(length, value) {
 }
 
 var numberOfSamples = 100;
-var timeBetweenSamples = 50; // milliseconds
+var stepSize = 50; // milliseconds
 
 var timeOfLastSample = null;
+var accumulator = 0;
 
 
 var sinSamples = initializeArray(numberOfSamples, function(index) {
@@ -43,26 +44,14 @@ var xScale = d3.scale.ordinal()
         .domain(d3.range(0, bardata.length))
         .rangeBands([0, width])
 
-function animateGraph(timestamp) {
+function step() {
+    bardata.shift();
+    bardata.push(sinSamples[sinSamplesIndex]);
+    sinSamplesIndex++;
+    sinSamplesIndex = sinSamplesIndex % numberOfSamples;
+}
 
-    if (!timeOfLastSample) {
-        timeOfLastSample = timestamp
-    }
-
-    var timeDelta = timestamp - timeOfLastSample;
-
-    if (timeDelta > timeBetweenSamples) {
-        timeOfLastSample = timestamp;
-        bardata.shift();
-        bardata.push(sinSamples[sinSamplesIndex]);
-        sinSamplesIndex++;
-        sinSamplesIndex = sinSamplesIndex % numberOfSamples;
-    }
-
-    // console.log('sinSamples', sinSamples);
-    // console.log('bardata', bardata);
-    // console.log('sinSamplesIndex', sinSamplesIndex);
-
+function draw () {
     d3.select('#chart').html("");
 
     d3.select('#chart').append('svg')
@@ -82,8 +71,26 @@ function animateGraph(timestamp) {
             .attr('y', function(d) {
                 return height - yScale(d);
             });
-
-    requestAnimationFrame(animateGraph);
 }
 
-requestAnimationFrame(animateGraph);
+function tick(timestamp) {
+
+    if (!timeOfLastSample) {
+        timeOfLastSample = timestamp
+    }
+
+    var timeDelta = timestamp - timeOfLastSample;
+    timeOfLastSample = timestamp;
+    accumulator += timeDelta;
+
+    while (accumulator >= stepSize) {
+        step();
+        accumulator -= stepSize;
+    }
+
+    draw();
+
+    requestAnimationFrame(tick);
+}
+
+requestAnimationFrame(tick);

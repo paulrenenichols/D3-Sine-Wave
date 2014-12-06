@@ -20,6 +20,16 @@ var stepSize = 50; // milliseconds
 var timeOfLastSample = null;
 var accumulator = 0;
 
+var speedInput = d3.select('#speed');
+
+speedInput.attr('value', stepSize);
+
+speedInput.on('keyup', function () {
+    var speed = parseInt(this.value);
+    if (speed && (speed > 0)) {
+        stepSize = 1000 / speed;
+    }
+}); 
 
 var sinSamples = initializeArray(numberOfSamples, function(index) {
     return Math.sin( ( (2 * Math.PI) / numberOfSamples) * index );
